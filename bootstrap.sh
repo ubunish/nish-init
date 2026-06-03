@@ -21,7 +21,7 @@ INIT_REPO="git@github.com:ubunish/nish-init.git"
 # that owns its own lifecycle, so it sits apart from the workflow repos and is
 # cloned on its own rather than through the vcstool manifest. Override for tests.
 FM_ROS2_DIR="${FM_ROS2_DIR:-$HOME/fm_ros2}"
-FM_ROS2_REPO="git@github.com:ubunish/fm-ros2.git"
+FM_ROS2_REPO="git@github.com:Ubundi/fm-ros2.git"
 
 # --- Bare logging until scripts/lib.sh exists ------------------------------
 # The clone may not be present yet on a curl|bash run, so define minimal
