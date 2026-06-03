@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# nish-bringup entrypoint — usable workstation → operational environment.
+# nish-init entrypoint — usable workstation → operational environment.
 #
-# Curl-able: this script self-clones nish-bringup, imports the workflow repos
+# Curl-able: this script self-clones nish-init, imports the workflow repos
 # into ~/ubunish, clones fm-ros2 into ~/fm_ros2, runs the platform layer
-# (nish-ignition), then each repo's own installer. Safe to re-run: every step
+# (nish-setup), then each repo's own installer. Safe to re-run: every step
 # is idempotent.
 #
-#   curl -fsSL https://raw.githubusercontent.com/ubunish/nish-bringup/main/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ubunish/nish-init/main/bootstrap.sh | bash
 
 set -euo pipefail
 
 # Where all repos clone. Override with UBUNISH_DIR for testing (mirrors
-# nish-ignition's CODE_DIR hook).
+# nish-setup's CODE_DIR hook).
 UBUNISH_DIR="${UBUNISH_DIR:-$HOME/ubunish}"
 
-BRINGUP_DIR="$UBUNISH_DIR/nish-bringup"
-BRINGUP_REPO="git@github.com:ubunish/nish-bringup.git"
+INIT_DIR="$UBUNISH_DIR/nish-init"
+INIT_REPO="git@github.com:ubunish/nish-init.git"
 
 # fm-ros2 lives in $HOME, not $UBUNISH_DIR: it is a standalone ROS 2 workspace
 # that owns its own lifecycle, so it sits apart from the workflow repos and is
@@ -46,14 +46,14 @@ fi
 if [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/repos.yaml" ]]; then
   # Not running from a clone (curl|bash). Clone, then hand off to the clone.
   mkdir -p "$UBUNISH_DIR"
-  if [[ ! -d "$BRINGUP_DIR/.git" ]]; then
-    log "cloning nish-bringup into $BRINGUP_DIR"
-    git clone "$BRINGUP_REPO" "$BRINGUP_DIR"
+  if [[ ! -d "$INIT_DIR/.git" ]]; then
+    log "cloning nish-init into $INIT_DIR"
+    git clone "$INIT_REPO" "$INIT_DIR"
   else
-    log "nish-bringup already cloned at $BRINGUP_DIR"
+    log "nish-init already cloned at $INIT_DIR"
   fi
   log "re-executing from clone"
-  exec bash "$BRINGUP_DIR/bootstrap.sh" "$@"
+  exec bash "$INIT_DIR/bootstrap.sh" "$@"
 fi
 
 # From here on we are guaranteed to run inside the clone.
@@ -70,7 +70,7 @@ esac
 
 # _run_installer LABEL PATH ARG... — run a cloned repo's installer if present.
 # A partial run (repo not yet cloned) warns instead of hard-failing, matching
-# nish-ignition's _delegate_contract behaviour.
+# nish-setup's _delegate_contract behaviour.
 _run_installer() {
   local label="$1" installer="$2"; shift 2
   if [[ -x "$installer" ]]; then
@@ -81,11 +81,11 @@ _run_installer() {
   fi
 }
 
-log "nish-bringup → operational environment [$OS]"
+log "nish-init → operational environment [$OS]"
 info "Repos dir: $UBUNISH_DIR"
 echo
 
-# 3. import every repo (incl. nish-ignition). vcs skips repos already present.
+# 3. import every repo (incl. nish-setup). vcs skips repos already present.
 has_cmd vcs || { err "vcstool (vcs) is required but not installed"; exit 1; }
 log "vcs import $UBUNISH_DIR < repos.yaml"
 vcs import "$UBUNISH_DIR" <"$SCRIPT_DIR/repos.yaml"
@@ -102,9 +102,9 @@ else
 fi
 echo
 
-# 4. platform layer first — nish-ignition turns the bare machine into a
+# 4. platform layer first — nish-setup turns the bare machine into a
 #    usable workstation (packages, drivers, ROS, SSH).
-_run_installer "ignition" "$UBUNISH_DIR/nish-ignition/setup.sh"
+_run_installer "nish-setup" "$UBUNISH_DIR/nish-setup/setup.sh"
 echo
 
 # 5. workflow installers via the {install|uninstall|status} contract (install).

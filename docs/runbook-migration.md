@@ -1,7 +1,7 @@
 # Runbook: Migrate Loose Repos to `~/ubunish`
 
 One-time migration for a machine whose workflow repos were cloned loose in the
-home directory, before `nish-bringup` owned the layout. On a fresh machine this
+home directory, before `nish-init` owned the layout. On a fresh machine this
 is unnecessary — `bootstrap.sh` clones everything into `~/ubunish` directly.
 
 ## Why
@@ -12,8 +12,8 @@ in `~/fm_ros2`, not under `~/ubunish`.
 
 ```
 ~/ubunish/
-├── nish-bringup
-├── nish-ignition
+├── nish-init
+├── nish-setup
 ├── nish-ai
 ├── nish-aliases
 └── nish-tui
@@ -28,7 +28,7 @@ leave fm-ros2 in `$HOME` under the `fm_ros2` name.
 
 ```bash
 mkdir -p ~/ubunish
-mv ~/nish-ignition ~/nish-ai ~/nish-tui ~/nish-aliases ~/nish-bringup ~/ubunish/
+mv ~/nish-setup ~/nish-ai ~/nish-tui ~/nish-aliases ~/nish-init ~/ubunish/
 mv ~/fm-ros2 ~/fm_ros2          # stays in $HOME, renamed to underscore
 ```
 

@@ -1,4 +1,4 @@
-# nish-bringup
+# nish-init
 
 One `./bootstrap.sh` that takes a usable workstation to a fully operational
 environment: clones the workflow repos into `~/ubunish`, clones `fm-ros2` into
@@ -7,17 +7,17 @@ Re-runnable from end to end.
 
 ## Layered Model
 
-Setup is two layers. Ignition turns a bare machine into a usable workstation;
-bringup turns that workstation into Nish's operational environment.
+Setup is two layers. nish-setup turns a bare machine into a usable workstation;
+nish-init turns that workstation into Nish's operational environment.
 
 ```
-ignition   bare machine ──────────→ usable workstation     (packages, drivers, ROS, SSH)
-                                                            [repo: ~/nish-ignition]
-bringup    usable workstation ─────→ operational env        (clone + install workflow repos)
-                                                            [this repo, runs ignition first]
+nish-setup   bare machine ──────────→ usable workstation     (packages, drivers, ROS, SSH)
+                                                            [repo: ~/ubunish/nish-setup]
+nish-init    usable workstation ─────→ operational env        (clone + install workflow repos)
+                                                            [this repo, runs nish-setup first]
 ```
 
-bringup is the single front door. It owns repo cloning; ignition stays
+nish-init is the single front door. It owns repo cloning; nish-setup stays
 platform-only.
 
 ## Call Flow
@@ -25,10 +25,10 @@ platform-only.
 ```
 bootstrap.sh
   ├── require git
-  ├── self-clone into ~/ubunish/nish-bringup   (only on curl|bash; re-exec from clone)
+  ├── self-clone into ~/ubunish/nish-init      (only on curl|bash; re-exec from clone)
   ├── vcs import ~/ubunish < repos.yaml         clones the 4 workflow repos (idempotent)
   ├── clone fm-ros2 into ~/fm_ros2              standalone (idempotent)
-  ├── ignition:  ~/ubunish/nish-ignition/setup.sh          platform layer first
+  ├── nish-setup:  ~/ubunish/nish-setup/setup.sh          platform layer first
   └── workflow installers:
         nish-ai/install.sh install
         nish-aliases/install.sh install
@@ -42,20 +42,20 @@ hard-failing. `<os>` is `macos` or `ubuntu`, resolved from `uname -s`.
 ## Quick Start
 
 Prerequisites: `git` and `vcstool` (`vcs`). SSH access to the `ubunish` org —
-the ssh-key step in ignition must have run and the key be on GitHub before the
+the ssh-key step in nish-setup must have run and the key be on GitHub before the
 SSH clone urls in `repos.yaml` resolve.
 
-Curl-able one-liner — clones bringup, then runs from the clone:
+Curl-able one-liner — clones nish-init, then runs from the clone:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ubunish/nish-bringup/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ubunish/nish-init/main/bootstrap.sh | bash
 ```
 
 Or clone and run manually:
 
 ```bash
-git clone git@github.com:ubunish/nish-bringup.git ~/ubunish/nish-bringup
-cd ~/ubunish/nish-bringup
+git clone git@github.com:ubunish/nish-init.git ~/ubunish/nish-init
+cd ~/ubunish/nish-init
 ./bootstrap.sh
 ```
 
@@ -71,11 +71,11 @@ installer skips work already done.
 
 ## repos.yaml Ownership
 
-`repos.yaml` is bringup's vcstool manifest and the single source of truth for
+`repos.yaml` is nish-init's vcstool manifest and the single source of truth for
 what gets cloned into `~/ubunish`:
 
 ```
-nish-ignition   platform layer (run first)
+nish-setup      platform layer (run first)
 nish-ai         AI tooling + config
 nish-tui        terminal UI
 nish-aliases    shell aliases
@@ -84,17 +84,17 @@ nish-aliases    shell aliases
 `fm-ros2` is not in the manifest. As a standalone ROS 2 workspace that owns its
 own lifecycle, it lives in `~/fm_ros2` and bootstrap.sh clones it on its own.
 
-bringup owns this cloning. ignition has its own narrower manifest for the
+nish-init owns this cloning. nish-setup has its own narrower manifest for the
 platform layer and never reaches into the workflow repos.
 
 ## Layout
 
 ```
-nish-bringup/
-├── bootstrap.sh        curl-able entrypoint: clone → import → ignition → installers
+nish-init/
+├── bootstrap.sh        curl-able entrypoint: clone → import → nish-setup → installers
 ├── repos.yaml          vcstool manifest for the 4 ~/ubunish workflow repos
 ├── scripts/
-│   └── lib.sh          logging helpers (mirrors nish-ignition's look)
+│   └── lib.sh          logging helpers (mirrors nish-setup's look)
 ├── LICENSE             Ubundi proprietary
 └── plans/              planning notes (gitignored)
 ```

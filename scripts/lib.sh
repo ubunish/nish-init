@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Shared logging helpers for bringup scripts. Source, don't execute.
-# Mirrors the look of nish-ignition/scripts/lib.sh so the two layers read alike.
+# Shared logging helpers for nish-init scripts. Source, don't execute.
+# Mirrors the look of nish-setup/scripts/lib.sh so the two layers read alike.
 
 set -euo pipefail
 
