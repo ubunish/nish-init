@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# nish-bringup entrypoint — usable workstation → operational environment.
+#
+# Curl-able: this script self-clones nish-bringup, imports every workflow repo
+# into ~/ubunish, runs the platform layer (nish-ignition), then each workflow
+# repo's own installer. Safe to re-run: every step is idempotent.
+#
+#   curl -fsSL https://raw.githubusercontent.com/ubunish/nish-bringup/main/bootstrap.sh | bash
+
+set -euo pipefail
+
+# Where all repos clone. Override with UBUNISH_DIR for testing (mirrors
+# nish-ignition's CODE_DIR hook).
+UBUNISH_DIR="${UBUNISH_DIR:-$HOME/ubunish}"
+
+BRINGUP_DIR="$UBUNISH_DIR/nish-bringup"
+BRINGUP_REPO="git@github.com:ubunish/nish-bringup.git"
+
+# --- Bare logging until scripts/lib.sh exists ------------------------------
+# The clone may not be present yet on a curl|bash run, so define minimal
+# loggers up front and replace them with lib.sh once the clone is in place.
+log()  { printf '==> %s\n' "$*"; }
+err()  { printf '  x %s\n' "$*" >&2; }
+
+# 1. require git — nothing works without it.
+command -v git >/dev/null 2>&1 || { err "git is required but not installed"; exit 1; }
+
+# 2. ensure a clone exists, then continue from it.
+# When piped from curl there is no source file on disk, so clone into
+# UBUNISH_DIR and re-exec from there. When already running inside a clone
+# (the common manual path), skip the clone and stay put.
+SELF="${BASH_SOURCE[0]}"
+if [[ -f "$SELF" ]]; then
+  SCRIPT_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+else
+  SCRIPT_DIR=""
+fi
+
+if [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/repos.yaml" ]]; then
+  # Not running from a clone (curl|bash). Clone, then hand off to the clone.
+  mkdir -p "$UBUNISH_DIR"
+  if [[ ! -d "$BRINGUP_DIR/.git" ]]; then
+    log "cloning nish-bringup into $BRINGUP_DIR"
+    git clone "$BRINGUP_REPO" "$BRINGUP_DIR"
+  else
+    log "nish-bringup already cloned at $BRINGUP_DIR"
+  fi
+  log "re-executing from clone"
+  exec bash "$BRINGUP_DIR/bootstrap.sh" "$@"
+fi
+
+# From here on we are guaranteed to run inside the clone.
+# shellcheck source=scripts/lib.sh
+source "$SCRIPT_DIR/scripts/lib.sh"
+
+# fm-ros2 ships a per-OS setup script; map uname to its naming.
+OS_RAW="$(uname -s)"
+case "$OS_RAW" in
+  Darwin) OS="macos"  ;;
+  Linux)  OS="ubuntu" ;;
+  *) err "unsupported OS: $OS_RAW"; exit 1 ;;
+esac
+
+# _run_installer LABEL PATH ARG... — run a cloned repo's installer if present.
+# A partial run (repo not yet cloned) warns instead of hard-failing, matching
+# nish-ignition's _delegate_contract behaviour.
+_run_installer() {
+  local label="$1" installer="$2"; shift 2
+  if [[ -x "$installer" ]]; then
+    log "$label: $installer $*"
+    "$installer" "$@"
+  else
+    warn "installer not found (repo not cloned?): $installer"
+  fi
+}
+
+log "nish-bringup → operational environment [$OS]"
+info "Repos dir: $UBUNISH_DIR"
+echo
+
+# 3. import every repo (incl. nish-ignition). vcs skips repos already present.
+has_cmd vcs || { err "vcstool (vcs) is required but not installed"; exit 1; }
+log "vcs import $UBUNISH_DIR < repos.yaml"
+vcs import "$UBUNISH_DIR" <"$SCRIPT_DIR/repos.yaml"
+ok "repos imported"
+echo
+
+# 4. platform layer first — nish-ignition turns the bare machine into a
+#    usable workstation (packages, drivers, ROS, SSH).
+_run_installer "ignition" "$UBUNISH_DIR/nish-ignition/setup.sh"
+echo
+
+# 5. workflow installers via the {install|uninstall|status} contract (install).
+#    fm-ros2 owns its own lifecycle and exposes only a per-OS setup script.
+_run_installer "nish-ai"      "$UBUNISH_DIR/nish-ai/install.sh"      install
+_run_installer "nish-aliases" "$UBUNISH_DIR/nish-aliases/install.sh" install
+_run_installer "nish-tui"     "$UBUNISH_DIR/nish-tui/install.sh"     install
+_run_installer "fm-ros2"      "$UBUNISH_DIR/fm-ros2/scripts/setup-$OS.sh"
+echo
+
+log "Done."
