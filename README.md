@@ -37,7 +37,7 @@ bootstrap.sh
 ```
 
 Each installer is optional on a partial run: a missing one warns rather than
-hard-failing. `<os>` is `macos` or `ubuntu`, resolved from `uname -s`.
+hard-failing. `<os>` is `macos` or `linux`, resolved from `uname -s`.
 
 ## Quick Start
 

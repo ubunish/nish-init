@@ -64,7 +64,7 @@ source "$SCRIPT_DIR/scripts/lib.sh"
 OS_RAW="$(uname -s)"
 case "$OS_RAW" in
   Darwin) OS="macos"  ;;
-  Linux)  OS="ubuntu" ;;
+  Linux)  OS="linux"  ;;
   *) err "unsupported OS: $OS_RAW"; exit 1 ;;
 esac
 
