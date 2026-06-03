@@ -1,0 +1,24 @@
+# vcstool manifest — all repos for the operational environment, cloned into ~/ubunish.
+# Imported with: vcs import ~/ubunish < repos.yaml
+# SSH urls require the ssh-key step (in nish-ignition) to have run and the key to be on GitHub.
+repositories:
+  nish-ignition:
+    type: git
+    url: git@github.com:ubunish/nish-ignition.git
+    version: main
+  nish-ai:
+    type: git
+    url: git@github.com:ubunish/nish-ai.git
+    version: main
+  nish-tui:
+    type: git
+    url: git@github.com:ubunish/nish-tui.git
+    version: main
+  nish-aliases:
+    type: git
+    url: git@github.com:ubunish/nish-aliases.git
+    version: main
+  fm-ros2:
+    type: git
+    url: git@github.com:ubunish/fm-ros2.git
+    version: main
