@@ -43,7 +43,8 @@ hard-failing. `<os>` is `macos` or `linux`, resolved from `uname -s`.
 
 Prerequisites: `git` and `vcstool` (`vcs`). SSH access to the `ubunish` org —
 the ssh-key step in nish-setup must have run and the key be on GitHub before the
-SSH clone urls in `repos.yaml` resolve.
+SSH clone urls in `repos.yaml` resolve. The same SSH key also needs access to the
+`Ubundi` org, which hosts `fm-ros2` (`git@github.com:Ubundi/fm-ros2.git`).
 
 Curl-able one-liner — clones nish-init, then runs from the clone:
 
