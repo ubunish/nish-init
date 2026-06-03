@@ -1,8 +1,9 @@
 # nish-bringup
 
 One `./bootstrap.sh` that takes a usable workstation to a fully operational
-environment: clones every workflow repo into `~/ubunish`, runs the platform
-layer, then each repo's own installer. Re-runnable from end to end.
+environment: clones the workflow repos into `~/ubunish`, clones `fm-ros2` into
+`~/fm_ros2`, runs the platform layer, then each repo's own installer.
+Re-runnable from end to end.
 
 ## Layered Model
 
@@ -25,13 +26,14 @@ platform-only.
 bootstrap.sh
   ├── require git
   ├── self-clone into ~/ubunish/nish-bringup   (only on curl|bash; re-exec from clone)
-  ├── vcs import ~/ubunish < repos.yaml         clones all 5 repos (idempotent)
+  ├── vcs import ~/ubunish < repos.yaml         clones the 4 workflow repos (idempotent)
+  ├── clone fm-ros2 into ~/fm_ros2              standalone (idempotent)
   ├── ignition:  ~/ubunish/nish-ignition/setup.sh          platform layer first
   └── workflow installers:
         nish-ai/install.sh install
         nish-aliases/install.sh install
         nish-tui/install.sh install
-        fm-ros2/scripts/setup-<os>.sh           (install only — owns its lifecycle)
+        ~/fm_ros2/scripts/setup-<os>.sh         (install only — owns its lifecycle)
 ```
 
 Each installer is optional on a partial run: a missing one warns rather than
@@ -64,7 +66,8 @@ installer skips work already done.
 
 | Variable | Effect |
 |----------|--------|
-| `UBUNISH_DIR=/path` | Override where repos clone (default `~/ubunish`) |
+| `UBUNISH_DIR=/path` | Override where the workflow repos clone (default `~/ubunish`) |
+| `FM_ROS2_DIR=/path` | Override where `fm-ros2` clones (default `~/fm_ros2`) |
 
 ## repos.yaml Ownership
 
@@ -76,8 +79,10 @@ nish-ignition   platform layer (run first)
 nish-ai         AI tooling + config
 nish-tui        terminal UI
 nish-aliases    shell aliases
-fm-ros2         First Motive ROS 2 workspace
 ```
+
+`fm-ros2` is not in the manifest. As a standalone ROS 2 workspace that owns its
+own lifecycle, it lives in `~/fm_ros2` and bootstrap.sh clones it on its own.
 
 bringup owns this cloning. ignition has its own narrower manifest for the
 platform layer and never reaches into the workflow repos.
@@ -87,7 +92,7 @@ platform layer and never reaches into the workflow repos.
 ```
 nish-bringup/
 ├── bootstrap.sh        curl-able entrypoint: clone → import → ignition → installers
-├── repos.yaml          vcstool manifest for the 5 ~/ubunish repos
+├── repos.yaml          vcstool manifest for the 4 ~/ubunish workflow repos
 ├── scripts/
 │   └── lib.sh          logging helpers (mirrors nish-ignition's look)
 ├── LICENSE             Ubundi proprietary

@@ -6,7 +6,9 @@ is unnecessary — `bootstrap.sh` clones everything into `~/ubunish` directly.
 
 ## Why
 
-`bootstrap.sh` and `repos.yaml` expect every repo side by side under `~/ubunish`:
+`bootstrap.sh` and `repos.yaml` expect the workflow repos side by side under
+`~/ubunish`. `fm-ros2` is the exception: as a standalone ROS 2 workspace it lives
+in `~/fm_ros2`, not under `~/ubunish`.
 
 ```
 ~/ubunish/
@@ -14,17 +16,20 @@ is unnecessary — `bootstrap.sh` clones everything into `~/ubunish` directly.
 ├── nish-ignition
 ├── nish-ai
 ├── nish-aliases
-├── nish-tui
-└── fm-ros2
+└── nish-tui
+
+~/fm_ros2          (standalone — not under ~/ubunish)
 ```
 
-A machine set up earlier has these loose in `$HOME`. Move them in.
+A machine set up earlier has these loose in `$HOME`. Move the workflow repos in;
+leave fm-ros2 in `$HOME` under the `fm_ros2` name.
 
 ## Procedure
 
 ```bash
 mkdir -p ~/ubunish
-mv ~/nish-ignition ~/nish-ai ~/nish-tui ~/nish-aliases ~/fm-ros2 ~/nish-bringup ~/ubunish/
+mv ~/nish-ignition ~/nish-ai ~/nish-tui ~/nish-aliases ~/nish-bringup ~/ubunish/
+mv ~/fm-ros2 ~/fm_ros2          # stays in $HOME, renamed to underscore
 ```
 
 Moving a git checkout is safe: git stores paths relative to the repo root, so

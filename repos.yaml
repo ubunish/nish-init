@@ -1,6 +1,7 @@
-# vcstool manifest — all repos for the operational environment, cloned into ~/ubunish.
+# vcstool manifest — workflow repos for the operational environment, cloned into ~/ubunish.
 # Imported with: vcs import ~/ubunish < repos.yaml
 # SSH urls require the ssh-key step (in nish-ignition) to have run and the key to be on GitHub.
+# fm-ros2 is NOT here: it lives in ~/fm_ros2 and bootstrap.sh clones it on its own.
 repositories:
   nish-ignition:
     type: git
@@ -17,8 +18,4 @@ repositories:
   nish-aliases:
     type: git
     url: git@github.com:ubunish/nish-aliases.git
-    version: main
-  fm-ros2:
-    type: git
-    url: git@github.com:ubunish/fm-ros2.git
     version: main

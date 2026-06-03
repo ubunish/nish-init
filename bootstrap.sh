@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # nish-bringup entrypoint — usable workstation → operational environment.
 #
-# Curl-able: this script self-clones nish-bringup, imports every workflow repo
-# into ~/ubunish, runs the platform layer (nish-ignition), then each workflow
-# repo's own installer. Safe to re-run: every step is idempotent.
+# Curl-able: this script self-clones nish-bringup, imports the workflow repos
+# into ~/ubunish, clones fm-ros2 into ~/fm_ros2, runs the platform layer
+# (nish-ignition), then each repo's own installer. Safe to re-run: every step
+# is idempotent.
 #
 #   curl -fsSL https://raw.githubusercontent.com/ubunish/nish-bringup/main/bootstrap.sh | bash
 
@@ -15,6 +16,12 @@ UBUNISH_DIR="${UBUNISH_DIR:-$HOME/ubunish}"
 
 BRINGUP_DIR="$UBUNISH_DIR/nish-bringup"
 BRINGUP_REPO="git@github.com:ubunish/nish-bringup.git"
+
+# fm-ros2 lives in $HOME, not $UBUNISH_DIR: it is a standalone ROS 2 workspace
+# that owns its own lifecycle, so it sits apart from the workflow repos and is
+# cloned on its own rather than through the vcstool manifest. Override for tests.
+FM_ROS2_DIR="${FM_ROS2_DIR:-$HOME/fm_ros2}"
+FM_ROS2_REPO="git@github.com:ubunish/fm-ros2.git"
 
 # --- Bare logging until scripts/lib.sh exists ------------------------------
 # The clone may not be present yet on a curl|bash run, so define minimal
@@ -85,6 +92,16 @@ vcs import "$UBUNISH_DIR" <"$SCRIPT_DIR/repos.yaml"
 ok "repos imported"
 echo
 
+# 3b. clone fm-ros2 on its own into $HOME (not the vcstool manifest, not
+#     $UBUNISH_DIR). Idempotent: skip when the clone already exists.
+if [[ ! -d "$FM_ROS2_DIR/.git" ]]; then
+  log "cloning fm-ros2 into $FM_ROS2_DIR"
+  git clone "$FM_ROS2_REPO" "$FM_ROS2_DIR"
+else
+  log "fm-ros2 already cloned at $FM_ROS2_DIR"
+fi
+echo
+
 # 4. platform layer first — nish-ignition turns the bare machine into a
 #    usable workstation (packages, drivers, ROS, SSH).
 _run_installer "ignition" "$UBUNISH_DIR/nish-ignition/setup.sh"
@@ -95,7 +112,7 @@ echo
 _run_installer "nish-ai"      "$UBUNISH_DIR/nish-ai/install.sh"      install
 _run_installer "nish-aliases" "$UBUNISH_DIR/nish-aliases/install.sh" install
 _run_installer "nish-tui"     "$UBUNISH_DIR/nish-tui/install.sh"     install
-_run_installer "fm-ros2"      "$UBUNISH_DIR/fm-ros2/scripts/setup-$OS.sh"
+_run_installer "fm-ros2"      "$FM_ROS2_DIR/scripts/setup-$OS.sh"
 echo
 
 log "Done."
